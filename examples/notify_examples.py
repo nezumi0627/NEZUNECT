@@ -1,14 +1,14 @@
 import logging
 
-from nnezunect import NNEZUNECT
-from nnezunect.utils.exceptions import APIError
+from NEZUNECT import NEZUNECT
+from NEZUNECT.utils.exceptions import APIError
 
 logging.basicConfig(level=logging.WARNING)
 
 
 class NotifyExamples:
     def __init__(self):
-        self.api = NNEZUNECT()
+        self.api = NEZUNECT(cookie="your_cookie_here", debug=True)
 
     def format_notification(self, notification):
         formatted = f"タイプ: {notification.get('type', 'unknown')}\n"

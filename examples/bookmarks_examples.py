@@ -1,14 +1,14 @@
 import logging
 
-from nnezunect import NNEZUNECT
-from nnezunect.utils.exceptions import APIError
+from NEZUNECT import NEZUNECT
+from NEZUNECT.utils.exceptions import APIError
 
 logging.basicConfig(level=logging.WARNING)
 
 
 class BookmarksExamples:
     def __init__(self):
-        self.api = NNEZUNECT()
+        self.api = NEZUNECT(cookie="your_cookie_here", debug=True)
 
     def format_bookmark_folder(self, folder):
         return f"""フォルダID: {folder.get('folderId', '')}
