@@ -1,6 +1,7 @@
-# NEZUNECT
+# NEZUNECT🍪
 
 NEZUNECT は、ソーシャルネットワーキングプラットフォームである [Subnect](https://subnect.com/) の非公式 API ラッパーです。
+
 このライブラリは、Subnect の機能をCookie🍪で操作するための使いやすいインターフェースを提供します。
 
 [English](README-en.md)
