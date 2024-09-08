@@ -117,8 +117,8 @@ class NEZUNECT:
     def change_language(self, language: str) -> Dict[str, Any]:
         return self.settings_api.change_language(language)
 
-    def change_theme(self, theme: str) -> Dict[str, Any]:
-        return self.settings_api.change_theme(theme)
+    def change_custom_color(self, theme: str) -> Dict[str, Any]:
+        return self.settings_api.change_custom_color(theme)
 
     def change_notification_sound(self, notification_sound: bool) -> Dict[str, Any]:
         return self.settings_api.change_notification_sound(notification_sound)
@@ -126,9 +126,12 @@ class NEZUNECT:
     def verify_email(self, email: str, code: str) -> Dict[str, Any]:
         return self.verify_api.verify_email(email, code)
 
+    def get_top_posts(self, skip: int = 0) -> Dict[str, Any]:
+        return self.posts_api.get_top_posts(skip)
+
     def close(self):
-        # セッションをクローズする処理があれば、ここに実装します
-        pass
+        if hasattr(self, "session") and self.session:
+            self.session.close()
 
     def __enter__(self):
         self.initialize()

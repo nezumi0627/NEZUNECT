@@ -141,3 +141,18 @@ class PostsAPI:
                 f"投稿の検索に失敗しました: {str(e)}",
                 status_code=response.status_code if hasattr(e, "response") else None,
             )
+
+    def get_top_posts(self, skip: int = 0, hours: int = 48) -> Dict[str, Any]:
+        url = f"{self.base_url}{Config.Endpoints.TOP_POSTS}?skip={skip}&hours={hours}"
+        headers = Headers.get_json("search")
+
+        try:
+            response = requests.get(url, headers=headers, cookies=self.cookies)
+            response.raise_for_status()
+            result = response.json()
+            return {"success": True, "data": result.get("posts", [])}
+        except requests.exceptions.RequestException as e:
+            raise APIError(
+                f"トップ投稿の取得に失敗しました: {str(e)}",
+                status_code=response.status_code if hasattr(e, "response") else None,
+            )

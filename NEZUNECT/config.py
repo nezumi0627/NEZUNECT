@@ -2,6 +2,8 @@ class Config:
     BASE_URL = "https://subnect.com/api"
 
     class Endpoints:
+        TOP_POSTS = "/posts/top"
+        SEARCH_POSTS = "/posts/search"
         POSTS = "/posts"
         POST_PIN = "/posts/{post_id}/pin"
         LIKE_POST = "/posts/{post_id}/like"
