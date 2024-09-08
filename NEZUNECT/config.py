@@ -1,0 +1,22 @@
+class Config:
+    BASE_URL = "https://subnect.com/api"
+
+    class Endpoints:
+        POSTS = "/posts"
+        POST_PIN = "/posts/{post_id}/pin"
+        LIKE_POST = "/posts/{post_id}/like"
+        REPOST = "/posts/{post_id}/repost"
+        SEARCH_POSTS = "/posts/search"
+        REACTIONS = "/posts/{post_id}/reactions"
+        BOOKMARKS = "/bookmarks"
+        BOOKMARK_ADD = "/bookmarks/{folder_id}/bookmark"
+        NOTIFICATIONS = "/notifications"
+        NOTIFICATION_SOUND = "/users/profiles/notifications/sound"
+        PROFILE = "/users/profiles"
+        PROFILE_EMAIL = "/users/email"
+        PROFILE_USERNAME = "/users/profiles/username"
+        SESSIONS = "/users/sessions"
+        THEME = "/users/theme"
+        LANGUAGE = "/users/language"
+        NOTIFICATION_SETTINGS = "/users/profiles/notifications"
+        EMAIL_VERIFY = "/users/email/verify"
