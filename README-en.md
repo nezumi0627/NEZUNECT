@@ -29,7 +29,7 @@ This library provides an easy-to-use interface for Cookie🍪 interacting with S
 NEZUNECT can be installed using the following git command:
 
 ```
-git clone https://github.com/nezumi0627/Nezu-nect-unofficial-api.git
+git clone https://github.com/nezumi0627/NEZUNCT.git
 ```
 
 ## Usage
