@@ -1,6 +1,8 @@
-# NEZUNECT
+# NEZUNECT🍪
 
-NEZUNECT is an unofficial API wrapper for the social networking platform [Subnect](https://subnect.com/). This library provides an easy-to-use interface for programmatically interacting with Subnect's features.
+NEZUNECT is an unofficial API wrapper for the social networking platform [Subnect](https://subnect.com/).
+
+This library provides an easy-to-use interface for Cookie🍪 interacting with Subnect's features.
 
 [日本語](README.md)
 
