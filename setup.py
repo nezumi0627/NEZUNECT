@@ -7,7 +7,7 @@ setup(
     name="nezunect",
     version="0.2.0",
     author="nezumi0627",
-    author_email="nezumi0627@gmail.com",
+    author_email="nezumi.20080627@gmail.com",
     description="A Python client library for the Subnect API",
     long_description=long_description,
     long_description_content_type="text/markdown",
