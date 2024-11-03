@@ -28,7 +28,7 @@ NEZUNECT は、ソーシャルネットワーキングプラットフォーム�
 NEZUNECT は以下の git コマンドを使用してインストールできます：
 
 ```
-git clone https://github.com/nezumi0627/Nezu-nect-unofficial-api.git
+git clone https://github.com/nezumi0627/NEZUNECT.git
 ```
 
 ## 使用方法
