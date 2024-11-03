@@ -22,3 +22,5 @@ class Config:
         LANGUAGE = "/users/language"
         NOTIFICATION_SETTINGS = "/users/profiles/notifications"
         EMAIL_VERIFY = "/users/email/verify"
+        MESSAGES_FOLLOWING_ONLY = "/users/profiles/messages-following-only"
+        MESSAGES = "/messages/{receiver_id}"

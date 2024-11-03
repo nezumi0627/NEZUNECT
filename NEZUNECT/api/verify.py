@@ -1,32 +1,45 @@
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
-import requests
+from requests import Session
 
 from ..config import Config
 from ..utils.agent import Headers
-from ..utils.cookies import load_cookies
 from ..utils.exceptions import APIError
+from .base import BaseAPI
 
 
-class VerifyAPI:
-    def __init__(self):
-        self.base_url = Config.BASE_URL
+class VerifyAPI(BaseAPI):
+    def __init__(self, session: Optional[Session] = None):
+        super().__init__(session)
         self.headers = Headers.get_json("verify")
-        self.cookies = load_cookies()
 
     def verify_email(self, email: str, code: str) -> Dict[str, Any]:
-        url = f"{self.base_url}{Config.Endpoints.EMAIL_VERIFY}"
+        """
+        メールアドレスの確認を行います。
+
+        Args:
+            email (str): 確認するメールアドレス。
+            code (str): 確認コード。
+
+        Returns:
+            Dict[str, Any]: APIレスポンス。
+
+        Raises:
+            APIError: APIリクエストが失敗した場合。
+        """
         data = {"email": email, "code": code}
 
         try:
-            response = requests.put(
-                url, headers=self.headers, cookies=self.cookies, json=data
+            response = self._request(
+                "PUT",
+                Config.Endpoints.EMAIL_VERIFY,
+                headers=self.headers,
+                data=data,
             )
-            response.raise_for_status()
-            result = response.json()
-            return {"success": True, "data": result}
-        except requests.exceptions.RequestException as e:
+            return response
+        except APIError as e:
             raise APIError(
                 f"メールアドレスの確認に失敗しました: {str(e)}",
-                status_code=response.status_code if hasattr(e, "response") else None,
+                status_code=e.status_code,
+                response=e.response,
             )

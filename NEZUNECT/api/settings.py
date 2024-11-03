@@ -1,106 +1,149 @@
-from typing import Any, Dict
+from dataclasses import dataclass
+from typing import Any, Dict, Optional
 
-import requests
+from requests import Session
 
 from ..config import Config
 from ..utils.agent import Headers
-from ..utils.cookies import load_cookies
 from ..utils.exceptions import APIError
+from .base import BaseAPI
 
 
-class SettingsAPI:
-    def __init__(self):
-        self.base_url = Config.BASE_URL
+@dataclass
+class ThemeSettings:
+    """テーマ設定を表すデータクラス"""
+
+    dark_mode: bool
+    back_color: Optional[str] = None
+    border_color: Optional[str] = None
+    accent_color: Optional[str] = None
+    font_color: Optional[str] = None
+
+
+class SettingsAPI(BaseAPI):
+    """設定関連のAPI操作を管理するクラス"""
+
+    def __init__(self, session: Optional[Session] = None) -> None:
+        super().__init__(session)
         self.headers = Headers.get_json("settings")
-        self.cookies = load_cookies()
 
     def change_dark_mode(self, dark_mode: bool) -> Dict[str, Any]:
-        url = f"{self.base_url}{Config.Endpoints.THEME}"
-        data = {"dark_mode": dark_mode}
+        """
+        ダークモードの設定を変更
 
+        Args:
+            dark_mode (bool): ダークモードを有効にするかどうか
+
+        Returns:
+            Dict[str, Any]: 変更結果
+
+        Raises:
+            APIError: 設定の変更に失敗した場合
+        """
         try:
-            response = requests.put(
-                url, headers=self.headers, cookies=self.cookies, json=data
+            response = self._make_request(
+                "PUT",
+                Config.Endpoints.THEME,
+                data={"dark_mode": dark_mode},
             )
-            response.raise_for_status()
-            result = response.json()
-            return {"success": True, "data": result}
-        except requests.exceptions.RequestException as e:
+            return response
+        except APIError as error:
             raise APIError(
-                f"ダークモードの変更に失敗しました: {str(e)}",
-                status_code=response.status_code if hasattr(e, "response") else None,
+                f"ダークモードの変更に失敗しました: {str(error)}", error.status_code
             )
 
     def change_language(self, language: str) -> Dict[str, Any]:
-        url = f"{self.base_url}{Config.Endpoints.LANGUAGE}"
-        headers = Headers.get_plain_text("settings/account")
-        language_code = None if language == "auto" else language
-        data = {"language": language_code}
+        """
+        言語設定を変更
 
+        Args:
+            language (str): 言語コード（"auto"の場合は自動設定）
+
+        Returns:
+            Dict[str, Any]: 変更結果
+
+        Raises:
+            APIError: 設定の変更に失敗した場合
+        """
         try:
-            response = requests.put(
-                url, headers=headers, cookies=load_cookies(), json=data
+            response = self._make_request(
+                "PUT",
+                Config.Endpoints.LANGUAGE,
+                headers=Headers.get_plain_text("settings/account"),
+                data={"language": None if language == "auto" else language},
             )
-            response.raise_for_status()
-            result = response.json()
-            if result.get("message") == "Language Setting updated successfully.":
-                return {"success": True, "response": result}
-            else:
-                return {"success": False, "response": result}
-        except requests.exceptions.HTTPError as e:
-            print(f"HTTPエラー: {e}")
-            print(f"レスポンス内容: {response.text}")
-            return {"success": False, "error": str(e), "response": response.text}
-        except requests.exceptions.RequestException as e:
-            print(f"リクエストエラー: {e}")
-            return {"success": False, "error": str(e)}
+            return response
+        except APIError as error:
+            raise APIError(
+                f"言語設定の変更に失敗しました: {str(error)}", error.status_code
+            )
 
     def change_custom_color(self, color_type: str, color: str) -> Dict[str, Any]:
         """
-        Subnect APIを使用してカスタムカラー設定を変更します。
+        カスタムカラー設定を変更
 
         Args:
-            color_type (str): 変更する色の種類（"backColor", "borderColor", "accentColor", "fontColor"のいずれか）。
-            color (str): 設定する色のHEXコード（例: "e6e6e6"）。
+            color_type (str): 変更する色の種類
+            color (str): 設定する色のHEXコード
 
         Returns:
-            Dict[str, Any]: APIからのレスポンス。
+            Dict[str, Any]: 変更結果
+
+        Raises:
+            APIError: 設定の変更に失敗した場合
         """
-        url = f"{self.base_url}{Config.Endpoints.THEME}"
-
-        headers = Headers.get_plain_text("settings/theme")
-
-        data = {color_type: color}
-
         try:
-            response = requests.put(
-                url, headers=headers, cookies=load_cookies(), json=data
+            response = self._make_request(
+                "PUT",
+                Config.Endpoints.THEME,
+                headers=Headers.get_plain_text("settings/theme"),
+                data={color_type: color},
             )
-            response.raise_for_status()
-            result = response.json()
-            return {"success": True, "response": result}
-        except requests.exceptions.HTTPError as e:
-            print(f"HTTPエラー: {e}")
-            print(f"レスポンス内容: {response.text}")
-            return {"success": False, "error": str(e), "response": response.text}
-        except requests.exceptions.RequestException as e:
-            print(f"リクエストエラー: {e}")
-            return {"success": False, "error": str(e)}
-
-    def change_notification_sound(self, notification_sound: bool) -> Dict[str, Any]:
-        url = f"{self.base_url}{Config.Endpoints.NOTIFICATION_SOUND}"
-        headers = Headers.get_plain_text("settings/notification")
-        data = {"notification_sound": notification_sound}
-
-        try:
-            response = requests.put(
-                url, headers=headers, cookies=load_cookies(), json=data
-            )
-            response.raise_for_status()
-            result = response.json()
-            return {"success": True, "response": result}
-        except requests.exceptions.RequestException as e:
+            return response
+        except APIError as error:
             raise APIError(
-                f"通知音の変更に失敗しました: {str(e)}",
-                status_code=response.status_code if hasattr(e, "response") else None,
+                f"カスタムカラーの変更に失敗しました: {str(error)}", error.status_code
+            )
+
+    def change_notification_settings(
+        self, notification_sound: bool, messages_following_only: bool
+    ) -> Dict[str, Any]:
+        """
+        通知設定を変更
+
+        Args:
+            notification_sound (bool): 通知音を有効にするかどうか
+            messages_following_only (bool): フォロー中のユーザーからのみメッセージを受信するかどうか
+
+        Returns:
+            Dict[str, Any]: 変更結果
+
+        Raises:
+            APIError: 設定の変更に失敗した場合
+        """
+        try:
+            sound_response = self._make_request(
+                "PUT",
+                Config.Endpoints.NOTIFICATION_SOUND,
+                headers=Headers.get_plain_text("settings/notification"),
+                data={"notification_sound": notification_sound},
+            )
+
+            following_response = self._make_request(
+                "PUT",
+                Config.Endpoints.MESSAGES_FOLLOWING_ONLY,
+                headers=Headers.get_plain_text("settings/security"),
+                data={"messagesFollowingOnly": messages_following_only},
+            )
+
+            return {
+                "success": True,
+                "data": {
+                    "sound_settings": sound_response["data"],
+                    "following_settings": following_response["data"],
+                },
+            }
+        except APIError as error:
+            raise APIError(
+                f"通知設定の変更に失敗しました: {str(error)}", error.status_code
             )

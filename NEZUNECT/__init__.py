@@ -1,6 +1,9 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
+
+from requests import Session
 
 from .api.bookmarks import BookmarksAPI
+from .api.messages import MessagesAPI
 from .api.notify import NotifyAPI
 from .api.posts import PostsAPI
 from .api.profile import ProfileAPI
@@ -14,23 +17,20 @@ class NEZUNECT:
     def __init__(self, cookie: str, debug: bool = False):
         self.cookie = cookie
         self.debug = debug
-        self.notify_api = None
-        self.bookmarks_api = None
-        self.posts_api = None
-        self.profile_api = None
-        self.sessions_api = None
-        self.settings_api = None
-        self.verify_api = None
+        self.session = Session()
+        self._initialize_apis()
 
-    def initialize(self):
+    def _initialize_apis(self):
+        """Initialize all API instances with shared session"""
         load_cookies(self.cookie)
-        self.notify_api = NotifyAPI()
-        self.bookmarks_api = BookmarksAPI()
-        self.posts_api = PostsAPI()
-        self.profile_api = ProfileAPI()
-        self.sessions_api = SessionsAPI()
-        self.settings_api = SettingsAPI()
-        self.verify_api = VerifyAPI()
+        self.notify_api = NotifyAPI(session=self.session)
+        self.bookmarks_api = BookmarksAPI(session=self.session)
+        self.posts_api = PostsAPI(session=self.session)
+        self.profile_api = ProfileAPI(session=self.session)
+        self.sessions_api = SessionsAPI(session=self.session)
+        self.settings_api = SettingsAPI(session=self.session)
+        self.verify_api = VerifyAPI(session=self.session)
+        self.messages_api = MessagesAPI(session=self.session)
 
     def get_profile(self, username: str) -> Dict[str, Any]:
         return self.profile_api.get_profile(username)
@@ -129,12 +129,23 @@ class NEZUNECT:
     def get_top_posts(self, skip: int = 0) -> Dict[str, Any]:
         return self.posts_api.get_top_posts(skip)
 
+    def change_messages_following_only(self, following_only: bool) -> Dict[str, Any]:
+        return self.settings_api.change_messages_following_only(following_only)
+
+    def send_message(
+        self, receiver_id: str, text: str, assets: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
+        return self.messages_api.send_message(receiver_id, text, assets)
+
+    def get_messages(self, receiver_id: str, skip: int = 0) -> Dict[str, Any]:
+        return self.messages_api.get_messages(receiver_id, skip)
+
     def close(self):
         if hasattr(self, "session") and self.session:
             self.session.close()
 
     def __enter__(self):
-        self.initialize()
+        self._initialize_apis()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):

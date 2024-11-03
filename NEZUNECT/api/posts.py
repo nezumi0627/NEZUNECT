@@ -1,158 +1,135 @@
-from typing import Any, Dict, List
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-import requests
+from requests import Session
 
 from ..config import Config
 from ..utils.agent import Headers
-from ..utils.cookies import load_cookies
 from ..utils.exceptions import APIError
+from .base import BaseAPI
 
 
-class PostsAPI:
-    def __init__(self):
-        self.base_url = Config.BASE_URL
+@dataclass
+class PostAsset:
+    """投稿のアセット情報を表すデータクラス"""
+
+    asset_id: str
+    asset_url: str
+    asset_type: str
+    spoiler: bool
+    alt_text: Optional[str] = None
+
+
+@dataclass
+class PostProfile:
+    """投稿者のプロフィール情報を表すデータクラス"""
+
+    profile_id: str
+    username: str
+    nickname: str
+    bio: Optional[str]
+    icon_url: Optional[str]
+    is_official: bool
+    plan_name: str
+    created_at: datetime
+    is_following: bool
+    is_follower: bool
+    is_blocking: bool
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "PostProfile":
+        """辞書からPostProfileインスタンスを生成"""
+        return cls(
+            profile_id=data.get("profileId", ""),
+            username=data.get("username", ""),
+            nickname=data.get("nickname", ""),
+            bio=data.get("bio"),
+            icon_url=data.get("icon", {}).get("assetUrl"),
+            is_official=data.get("official", False),
+            plan_name=data.get("planName", ""),
+            created_at=datetime.fromisoformat(data.get("createdAt", "")),
+            is_following=data.get("isFollowing", False),
+            is_follower=data.get("isFollower", False),
+            is_blocking=data.get("isBlocking", False),
+        )
+
+
+class PostsAPI(BaseAPI):
+    """投稿関連のAPI操作を管理するクラス"""
+
+    def __init__(self, session: Optional[Session] = None) -> None:
+        """
+        PostsAPIクラスの初期化
+
+        Args:
+            session (Optional[Session]): リクエストセッション
+        """
+        super().__init__(session)
         self.headers = Headers.get_json("home")
-        self.cookies = load_cookies()
 
     def create_post(
-        self, text: str, assets: List[str] = [], scope: str = "public"
+        self,
+        text: str,
+        *,
+        assets: List[str] = [],
+        scope: str = "public",
+        scheduled_at: Optional[str] = None,
     ) -> Dict[str, Any]:
-        url = f"{self.base_url}{Config.Endpoints.POSTS}"
-        data = {"text": text, "assets": assets, "scope": scope}
+        """
+        投稿を作成する
 
-        try:
-            response = requests.post(
-                url, headers=self.headers, cookies=self.cookies, json=data
-            )
-            response.raise_for_status()
-            result = response.json()
-            return {"success": True, "data": result.get("post", {})}
-        except requests.exceptions.RequestException as e:
-            raise APIError(
-                f"投稿の作成に失敗しました: {str(e)}",
-                status_code=response.status_code if hasattr(e, "response") else None,
-            )
+        Args:
+            text (str): 投稿本文
+            assets (List[str], optional): アセットIDのリスト
+            scope (str, optional): 公開範囲
+            scheduled_at (Optional[str], optional): 投稿予定日時（ISO 8601形式）
 
-    def like_post(self, post_id: str) -> Dict[str, Any]:
-        url = f"{self.base_url}{Config.Endpoints.LIKE_POST.format(post_id=post_id)}"
+        Returns:
+            Dict[str, Any]: 作成された投稿の情報
 
-        try:
-            response = requests.post(url, headers=self.headers, cookies=self.cookies)
-            response.raise_for_status()
-            result = response.json()
-            return {"success": True, "data": result}
-        except requests.exceptions.RequestException as e:
-            raise APIError(
-                f"投稿へのいいねに失敗しました: {str(e)}",
-                status_code=response.status_code if hasattr(e, "response") else None,
-            )
-
-    def post_quote(
-        self, text: str, quote_id: str, assets: List[str] = [], scope: str = "public"
-    ) -> Dict[str, Any]:
-        url = f"{self.base_url}{Config.Endpoints.POSTS}"
-        headers = Headers.get_plain_text(f"posts/{quote_id}")
-        data = {"text": text, "assets": assets, "quoteId": quote_id, "scope": scope}
-
-        try:
-            response = requests.post(
-                url, headers=headers, cookies=self.cookies, json=data
-            )
-            response.raise_for_status()
-            result = response.json()
-            return {"success": True, "data": result.get("post", {})}
-        except requests.exceptions.RequestException as e:
-            raise APIError(
-                f"引用投稿の作成に失敗しました: {str(e)}",
-                status_code=response.status_code if hasattr(e, "response") else None,
-            )
-
-    def post_reaction(self, post_id: str, emoji: str) -> Dict[str, Any]:
-        url = f"{self.base_url}{Config.Endpoints.REACTIONS.format(post_id=post_id, emoji=emoji)}"
-        headers = Headers.get_plain_text(f"posts/{post_id}")
-        data = {"emoji": emoji}
-
-        try:
-            response = requests.post(
-                url, headers=headers, cookies=self.cookies, json=data
-            )
-            response.raise_for_status()
-            result = response.json()
-            return {"success": True, "data": result}
-        except requests.exceptions.RequestException as e:
-            raise APIError(
-                f"リアクションの追加に失敗しました: {str(e)}",
-                status_code=response.status_code if hasattr(e, "response") else None,
-            )
-
-    def post_reply(
-        self, text: str, reply_to_id: str, assets: List[str] = [], scope: str = "public"
-    ) -> Dict[str, Any]:
-        url = f"{self.base_url}{Config.Endpoints.POSTS}"
-        headers = Headers.get_plain_text("home")
+        Raises:
+            APIError: 投稿の作成に失敗した場合
+        """
         data = {
             "text": text,
             "assets": assets,
-            "replyToId": reply_to_id,
             "scope": scope,
         }
 
-        try:
-            response = requests.post(
-                url, headers=headers, cookies=self.cookies, json=data
-            )
-            response.raise_for_status()
-            result = response.json()
-            return {"success": True, "data": result.get("post", {})}
-        except requests.exceptions.RequestException as e:
-            raise APIError(
-                f"返信の作成に失敗しました: {str(e)}",
-                status_code=response.status_code if hasattr(e, "response") else None,
-            )
-
-    def post_repost(self, post_id: str) -> Dict[str, Any]:
-        url = f"{self.base_url}{Config.Endpoints.REPOST.format(post_id=post_id)}"
-        headers = Headers.get("home")
+        if scheduled_at:
+            data["scheduledAt"] = scheduled_at
 
         try:
-            response = requests.post(url, headers=headers, cookies=self.cookies)
-            response.raise_for_status()
-            result = response.json()
-            return {"success": True, "data": result}
-        except requests.exceptions.RequestException as e:
-            raise APIError(
-                f"リポストの作成に失敗しました: {str(e)}",
-                status_code=response.status_code if hasattr(e, "response") else None,
+            response = self._make_request(
+                "POST",
+                Config.Endpoints.POSTS,
+                data=data,
             )
+            return self._format_response(response, "post")
+        except APIError as error:
+            raise APIError(f"投稿の作成に失敗しました: {str(error)}", error.status_code)
 
-    def search_post(
-        self, query: str, skip: int = 0, hours: int = 168
-    ) -> Dict[str, Any]:
-        url = f"{self.base_url}{Config.Endpoints.SEARCH_POSTS}?query={query}&skip={skip}&hours={hours}"
-        headers = Headers.get_json("search")
+    def like_post(self, post_id: str) -> Dict[str, Any]:
+        """
+        投稿にいいねを付ける
 
+        Args:
+            post_id (str): いいねを付ける投稿のID
+
+        Returns:
+            Dict[str, Any]: いいねの結果情報
+
+        Raises:
+            APIError: いいねの追加に失敗した場合
+        """
         try:
-            response = requests.get(url, headers=headers, cookies=self.cookies)
-            response.raise_for_status()
-            result = response.json()
-            return {"success": True, "data": result.get("posts", [])}
-        except requests.exceptions.RequestException as e:
-            raise APIError(
-                f"投稿の検索に失敗しました: {str(e)}",
-                status_code=response.status_code if hasattr(e, "response") else None,
+            response = self._make_request(
+                "POST",
+                Config.Endpoints.LIKE_POST.format(post_id=post_id),
             )
-
-    def get_top_posts(self, skip: int = 0, hours: int = 48) -> Dict[str, Any]:
-        url = f"{self.base_url}{Config.Endpoints.TOP_POSTS}?skip={skip}&hours={hours}"
-        headers = Headers.get_json("search")
-
-        try:
-            response = requests.get(url, headers=headers, cookies=self.cookies)
-            response.raise_for_status()
-            result = response.json()
-            return {"success": True, "data": result.get("posts", [])}
-        except requests.exceptions.RequestException as e:
+            return response
+        except APIError as error:
             raise APIError(
-                f"トップ投稿の取得に失敗しました: {str(e)}",
-                status_code=response.status_code if hasattr(e, "response") else None,
+                f"いいねの追加に失敗しました: {str(error)}", error.status_code
             )
